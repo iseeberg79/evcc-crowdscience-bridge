@@ -43,6 +43,10 @@ def create_remote_client():
         "Connected to remote broker" if rc == 0 else f"Remote connect failed: rc={rc}",
         flush=True,
     )
+    client.on_disconnect = lambda c, u, rc: print(
+        f"Disconnected from remote broker: rc={rc}",
+        flush=True,
+    )
     return client
 
 
