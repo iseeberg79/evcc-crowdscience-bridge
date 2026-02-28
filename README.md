@@ -30,6 +30,8 @@ docker compose logs -f
 
 > **Note:** If your Mosquitto runs in a separate Docker Compose stack, the default `LOCAL_HOST=mosquitto` won't resolve (no shared Docker network). Set `LOCAL_HOST` to the host's IP or hostname instead.
 
+If you want to run Mosquitto and the bridge together in one stack, see [`docker-compose.example.yml`](docker-compose.example.yml) for a complete example.
+
 ### systemd (without Docker)
 
 Install the dependency:

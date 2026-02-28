@@ -1,0 +1,26 @@
+services:
+  mosquitto:
+    container_name: mosquitto
+    restart: unless-stopped
+    image: eclipse-mosquitto
+    environment:
+      - TZ=Europe/Berlin
+    volumes:
+      - ./config/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - ./config/passwords:/mosquitto/config/passwords
+      - ./data:/mosquitto/data
+      - ./log:/mosquitto/log
+    ports:
+      - 1883:1883
+
+  evcc-crowdscience-bridge:
+    container_name: evcc-crowdscience-bridge
+    restart: unless-stopped
+    image: python:3.12-slim
+    env_file: .env
+    volumes:
+      - ./bridge.py:/bridge.py:ro
+    command: >
+      sh -c "pip install paho-mqtt==1.6.1 --quiet && python /bridge.py"
+    depends_on:
+      - mosquitto
