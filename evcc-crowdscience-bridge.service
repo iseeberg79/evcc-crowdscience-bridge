@@ -1,0 +1,12 @@
+[Unit]
+Description=evcc Crowdscience Bridge
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /opt/evcc-crowdscience-bridge/bridge.py
+EnvironmentFile=/etc/evcc-crowdscience-bridge.env
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
