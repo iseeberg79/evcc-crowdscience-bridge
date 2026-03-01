@@ -25,7 +25,8 @@ LOCAL_TOPIC    = os.environ.get("LOCAL_TOPIC", "evcc")
 remote_client  = None
 msg_count      = 0
 
-STATS_INTERVAL = int(os.environ.get("STATS_INTERVAL", 300))
+STATS_INTERVAL   = int(os.environ.get("STATS_INTERVAL", 300))
+FILTER_ENABLED   = os.environ.get("FILTER_ENABLED", "true").lower() not in ("false", "0")
 
 FILTERING_TS_URL = (
     "https://raw.githubusercontent.com/htw-solarspeichersysteme/"
@@ -62,9 +63,13 @@ def make_filter(config_prefixes, invalid_substrings):
     return filter_topic
 
 
-config_prefixes, invalid_substrings = load_filter_from_ts()
-if config_prefixes is not None:
-    print(f"Filter loaded: {len(config_prefixes)} config prefixes, {len(invalid_substrings)} invalid substrings", flush=True)
+if FILTER_ENABLED:
+    config_prefixes, invalid_substrings = load_filter_from_ts()
+    if config_prefixes is not None:
+        print(f"Filter loaded: {len(config_prefixes)} config prefixes, {len(invalid_substrings)} invalid substrings", flush=True)
+else:
+    print("Filtering disabled via FILTER_ENABLED=false", flush=True)
+    config_prefixes, invalid_substrings = None, None
 filter_topic = make_filter(config_prefixes, invalid_substrings)
 
 

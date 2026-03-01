@@ -76,6 +76,7 @@ sudo journalctl -fu evcc-crowdscience-bridge
 | `REMOTE_HOST`    | no       | `mqtt.evcc-crowdscience.de`    | Crowdscience broker hostname         |
 | `REMOTE_PORT`    | no       | `443`                          | Crowdscience broker port (WSS)       |
 | `STATS_INTERVAL` | no       | `300`                          | Interval in seconds for throughput stats logged to stdout |
+| `FILTER_ENABLED` | no       | `true`                         | Set to `false` or `0` to disable topic filtering (useful for debugging) |
 
 ## Stats
 
