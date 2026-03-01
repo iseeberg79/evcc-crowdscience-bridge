@@ -7,6 +7,7 @@ Configuration via environment variables (see .env.example).
 import os
 import ssl
 import time
+import threading
 import paho.mqtt.client as mqtt
 
 LOCAL_HOST     = os.environ.get("LOCAL_HOST", "mosquitto")
@@ -20,6 +21,18 @@ DEVICE_ID      = os.environ["DEVICE_ID"]
 LOCAL_TOPIC    = os.environ.get("LOCAL_TOPIC", "evcc")
 
 remote_client  = None
+msg_count      = 0
+
+STATS_INTERVAL = int(os.environ.get("STATS_INTERVAL", 300))
+
+
+def stats_loop():
+    last = 0
+    while True:
+        time.sleep(STATS_INTERVAL)
+        total = msg_count
+        print(f"Stats: {total - last} messages in last {STATS_INTERVAL // 60} min (total: {total})", flush=True)
+        last = total
 
 
 def on_local_connect(client, userdata, flags, rc):
@@ -31,9 +44,11 @@ def on_local_connect(client, userdata, flags, rc):
 
 
 def on_local_message(client, userdata, msg):
+    global msg_count
     suffix = msg.topic[len(LOCAL_TOPIC) + 1:]
     remote_topic = f"evcc/{DEVICE_ID}/{suffix}"
     remote_client.publish(remote_topic, msg.payload, qos=1)
+    msg_count += 1
 
 
 def create_remote_client():
@@ -49,6 +64,8 @@ def create_remote_client():
     )
     return client
 
+
+threading.Thread(target=stats_loop, daemon=True).start()
 
 remote_client = create_remote_client()
 remote_client.connect(REMOTE_HOST, REMOTE_PORT, keepalive=60)
