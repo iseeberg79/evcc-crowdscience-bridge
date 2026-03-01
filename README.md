@@ -98,6 +98,12 @@ This keeps the filter logic in sync with what the Crowdscience backend expects w
 
 Filtering also reduces outbound traffic: evcc publishes many topics that are irrelevant for research purposes (config, tariffs, evopt, …), which can add up to a significant share of all messages. The remote broker would discard them anyway — dropping them locally saves bandwidth and avoids unnecessary publishes.
 
+## Legal
+
+**Data privacy:** This bridge transmits energy and charging data from your local system to the HTW Berlin Crowdscience broker. Depending on your jurisdiction, this data may constitute personal data under applicable privacy law (e.g. GDPR). You are solely responsible for ensuring that you are entitled to share this data and that doing so complies with applicable law.
+
+**Disclaimer:** This software is provided "as is", without warranty of any kind. The authors are not liable for any damages or data loss arising from its use.
+
 ## Notes
 
 - The Crowdscience broker accepts data **without authentication** – only reading requires authorization.
