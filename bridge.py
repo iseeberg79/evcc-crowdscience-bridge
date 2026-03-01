@@ -5,9 +5,11 @@ Configuration via environment variables (see .env.example).
 """
 
 import os
+import re
 import ssl
 import time
 import threading
+import urllib.request
 import paho.mqtt.client as mqtt
 
 LOCAL_HOST     = os.environ.get("LOCAL_HOST", "mosquitto")
@@ -24,6 +26,46 @@ remote_client  = None
 msg_count      = 0
 
 STATS_INTERVAL = int(os.environ.get("STATS_INTERVAL", 300))
+
+FILTERING_TS_URL = (
+    "https://raw.githubusercontent.com/htw-solarspeichersysteme/"
+    "evcc-crowdscience/main/apps/transporter/src/lib/filtering.ts"
+)
+
+
+def load_filter_from_ts():
+    try:
+        with urllib.request.urlopen(FILTERING_TS_URL, timeout=5) as r:
+            src = r.read().decode()
+        def parse_array(name):
+            m = re.search(rf'{name}\s*=\s*\[(.*?)\]', src, re.DOTALL)
+            return re.findall(r'"([^"]+)"', m.group(1)) if m else []
+        config_prefixes   = parse_array("configPrefixes")
+        invalid_substrings = parse_array("invalidSubstrings")
+        if not config_prefixes and not invalid_substrings:
+            raise ValueError("parsed empty filter config")
+        return config_prefixes, invalid_substrings
+    except Exception as e:
+        print(f"Warning: could not load filter config ({e}) – forwarding unfiltered", flush=True)
+        return None, None
+
+
+def make_filter(config_prefixes, invalid_substrings):
+    if config_prefixes is None:
+        return lambda suffix: False
+    def filter_topic(suffix):
+        if any(suffix.startswith(p) for p in config_prefixes):
+            return True
+        if any(kw in suffix.lower() for kw in invalid_substrings):
+            return True
+        return False
+    return filter_topic
+
+
+config_prefixes, invalid_substrings = load_filter_from_ts()
+if config_prefixes is not None:
+    print(f"Filter loaded: {len(config_prefixes)} config prefixes, {len(invalid_substrings)} invalid substrings", flush=True)
+filter_topic = make_filter(config_prefixes, invalid_substrings)
 
 
 def stats_loop():
@@ -46,6 +88,8 @@ def on_local_connect(client, userdata, flags, rc):
 def on_local_message(client, userdata, msg):
     global msg_count
     suffix = msg.topic[len(LOCAL_TOPIC) + 1:]
+    if filter_topic(suffix):
+        return
     remote_topic = f"evcc/{DEVICE_ID}/{suffix}"
     remote_client.publish(remote_topic, msg.payload, qos=1)
     msg_count += 1
