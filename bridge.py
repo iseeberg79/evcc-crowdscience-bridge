@@ -77,6 +77,7 @@ def stats_loop():
         last = total
 
 
+
 def on_local_connect(client, userdata, flags, rc):
     if rc == 0:
         print("Connected to local broker", flush=True)
@@ -109,7 +110,8 @@ def create_remote_client():
     return client
 
 
-threading.Thread(target=stats_loop, daemon=True).start()
+if STATS_INTERVAL > 0:
+    threading.Thread(target=stats_loop, daemon=True).start()
 
 remote_client = create_remote_client()
 remote_client.connect(REMOTE_HOST, REMOTE_PORT, keepalive=60)

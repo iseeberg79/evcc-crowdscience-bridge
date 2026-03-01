@@ -75,6 +75,28 @@ sudo journalctl -fu evcc-crowdscience-bridge
 | `LOCAL_TOPIC`    | no       | `evcc`                         | Local MQTT topic prefix to subscribe |
 | `REMOTE_HOST`    | no       | `mqtt.evcc-crowdscience.de`    | Crowdscience broker hostname         |
 | `REMOTE_PORT`    | no       | `443`                          | Crowdscience broker port (WSS)       |
+| `STATS_INTERVAL` | no       | `300`                          | Interval in seconds for throughput stats logged to stdout |
+
+## Stats
+
+The bridge periodically logs throughput to stdout:
+
+```
+Stats: 142 messages in last 5 min (total: 1847)
+```
+
+Adjust the interval via `STATS_INTERVAL` (default: 300 s). Set it to `0` to disable stats.
+
+## Filtering
+
+On startup the bridge fetches the [filter configuration](https://github.com/htw-solarspeichersysteme/evcc-crowdscience/blob/main/apps/transporter/src/lib/filtering.ts) from the upstream Crowdscience repository and uses it to drop topics that should not be forwarded:
+
+- Topics whose suffix starts with one of the **config prefixes** (e.g. passwords, credentials stored in evcc config topics)
+- Topics whose suffix contains one of the **invalid substrings** (e.g. keys, tokens)
+
+This keeps the filter logic in sync with what the Crowdscience backend expects without requiring manual updates here. If the upstream file cannot be fetched the bridge starts **without filtering** and logs a warning.
+
+Filtering also reduces outbound traffic: evcc publishes many topics that are irrelevant for research purposes (config, tariffs, evopt, …), which can add up to a significant share of all messages. The remote broker would discard them anyway — dropping them locally saves bandwidth and avoids unnecessary publishes.
 
 ## Notes
 
