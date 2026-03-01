@@ -81,3 +81,4 @@ sudo journalctl -fu evcc-crowdscience-bridge
 - The Crowdscience broker accepts data **without authentication** – only reading requires authorization.
 - Data is transmitted encrypted (TLS).
 - Mosquitto does not support WebSocket bridges natively, hence this separate bridge container.
+- DEVICE_ID is without prefix (no 'evcc/')
