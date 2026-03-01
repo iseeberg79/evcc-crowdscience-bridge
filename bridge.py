@@ -72,6 +72,9 @@ else:
     config_prefixes, invalid_substrings = None, None
 filter_topic = make_filter(config_prefixes, invalid_substrings)
 
+print(f"Device ID: {DEVICE_ID}", flush=True)
+print(f"Publishing to: evcc/{DEVICE_ID}/<suffix>", flush=True)
+
 
 def stats_loop():
     last = 0
