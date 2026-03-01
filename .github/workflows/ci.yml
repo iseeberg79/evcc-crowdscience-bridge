@@ -18,6 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - run: touch .env
       - name: Validate docker-compose.yml
         run: docker compose -f docker-compose.yml config --quiet
       - name: Validate docker-compose.example.yml
