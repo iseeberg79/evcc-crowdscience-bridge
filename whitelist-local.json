@@ -17,7 +17,7 @@
     "loadpoints/+/+",
     "loadpoints/+/chargeCurrents/+",
     "loadpoints/+/chargeVoltages/+",
-    "loadpoints/+/effectivePlanStrategy/+",
+    "loadpoints/+/planStrategy/+",
     "vehicles",
     "vehicles/+/+"
   ]
