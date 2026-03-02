@@ -4,6 +4,7 @@ Forwards local evcc MQTT topics to the HTW Berlin Crowdscience broker via WSS.
 Configuration via environment variables (see .env.example).
 """
 
+import json
 import os
 import re
 import ssl
@@ -25,8 +26,9 @@ LOCAL_TOPIC    = os.environ.get("LOCAL_TOPIC", "evcc")
 remote_client  = None
 msg_count      = 0
 
-STATS_INTERVAL   = int(os.environ.get("STATS_INTERVAL", 300))
-FILTER_ENABLED   = os.environ.get("FILTER_ENABLED", "true").lower() not in ("false", "0")
+STATS_INTERVAL    = int(os.environ.get("STATS_INTERVAL", 300))
+FILTER_ENABLED    = os.environ.get("FILTER_ENABLED", "true").lower() not in ("false", "0")
+LOCAL_FILTER_PATH = os.environ.get("LOCAL_FILTER_PATH", "filter-local.json")
 
 FILTERING_TS_URL = (
     "https://raw.githubusercontent.com/htw-solarspeichersysteme/"
@@ -63,10 +65,27 @@ def make_filter(config_prefixes, invalid_substrings):
     return filter_topic
 
 
+def load_local_filter():
+    try:
+        with open(LOCAL_FILTER_PATH) as f:
+            data = json.load(f)
+        return data.get("configPrefixes", []), data.get("invalidSubstrings", [])
+    except FileNotFoundError:
+        return [], []
+    except Exception as e:
+        print(f"Warning: could not load local filter ({e})", flush=True)
+        return [], []
+
+
 if FILTER_ENABLED:
     config_prefixes, invalid_substrings = load_filter_from_ts()
     if config_prefixes is not None:
         print(f"Filter loaded: {len(config_prefixes)} config prefixes, {len(invalid_substrings)} invalid substrings", flush=True)
+    local_config, local_invalid = load_local_filter()
+    if local_config or local_invalid:
+        config_prefixes = (config_prefixes or []) + local_config
+        invalid_substrings = (invalid_substrings or []) + local_invalid
+        print(f"Local filter: +{len(local_config)} config prefixes, +{len(local_invalid)} invalid substrings", flush=True)
 else:
     print("Filtering disabled via FILTER_ENABLED=false", flush=True)
     config_prefixes, invalid_substrings = None, None

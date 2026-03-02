@@ -1,0 +1,10 @@
+{
+  "configPrefixes": [
+    "site/eebus/",
+    "site/messaging/",
+    "site/modbusproxy/",
+    "site/ocpp/",
+    "site/tariffs/"
+  ],
+  "invalidSubstrings": []
+}
