@@ -21,6 +21,6 @@ services:
     volumes:
       - ./bridge.py:/bridge.py:ro
     command: >
-      sh -c "pip install paho-mqtt==1.6.1 --quiet && python /bridge.py"
+      sh -c "pip install paho-mqtt==1.6.1 --quiet --root-user-action=ignore && python /bridge.py"
     depends_on:
       - mosquitto

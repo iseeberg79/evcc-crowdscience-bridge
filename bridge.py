@@ -79,12 +79,13 @@ def load_local_whitelist():
             patterns = json.load(f).get("allowedPatterns", [])
         if not patterns:
             return None
-        print(f"Whitelist loaded: {len(patterns)} patterns", flush=True)
+        print(f"Whitelist loaded: {len(patterns)} patterns ({LOCAL_WHITELIST_PATH}) – blacklist inactive", flush=True)
         return patterns
     except FileNotFoundError:
+        print(f"Whitelist: not configured ({LOCAL_WHITELIST_PATH} not found) – using blacklist", flush=True)
         return None
     except Exception as e:
-        print(f"Warning: could not load whitelist ({e})", flush=True)
+        print(f"Warning: could not load whitelist ({e}) – using blacklist", flush=True)
         return None
 
 
@@ -92,8 +93,12 @@ def load_local_filter():
     try:
         with open(LOCAL_FILTER_PATH) as f:
             data = json.load(f)
-        return data.get("configPrefixes", []), data.get("invalidSubstrings", [])
+        prefixes = data.get("configPrefixes", [])
+        substrings = data.get("invalidSubstrings", [])
+        print(f"Local filter loaded: +{len(prefixes)} config prefixes, +{len(substrings)} invalid substrings ({LOCAL_FILTER_PATH})", flush=True)
+        return prefixes, substrings
     except FileNotFoundError:
+        print(f"Local filter: not configured ({LOCAL_FILTER_PATH} not found)", flush=True)
         return [], []
     except Exception as e:
         print(f"Warning: could not load local filter ({e})", flush=True)
@@ -108,7 +113,6 @@ if FILTER_ENABLED:
     if local_config or local_invalid:
         config_prefixes = (config_prefixes or []) + local_config
         invalid_substrings = (invalid_substrings or []) + local_invalid
-        print(f"Local filter: +{len(local_config)} config prefixes, +{len(local_invalid)} invalid substrings", flush=True)
 else:
     print("Filtering disabled via FILTER_ENABLED=false", flush=True)
     config_prefixes, invalid_substrings = None, None

@@ -6,5 +6,7 @@ services:
     env_file: .env
     volumes:
       - ./bridge.py:/bridge.py:ro
+      - ./filter-local.json:/filter-local.json:ro
+      - ./whitelist-local.json:/whitelist-local.json:ro
     command: >
-      sh -c "pip install paho-mqtt==1.6.1 --quiet && python /bridge.py"
+      sh -c "pip install paho-mqtt==1.6.1 --quiet --root-user-action=ignore && python /bridge.py"

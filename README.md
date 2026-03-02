@@ -75,8 +75,10 @@ sudo journalctl -fu evcc-crowdscience-bridge
 | `LOCAL_TOPIC`    | no       | `evcc`                         | Local MQTT topic prefix to subscribe |
 | `REMOTE_HOST`    | no       | `mqtt.evcc-crowdscience.de`    | Crowdscience broker hostname         |
 | `REMOTE_PORT`    | no       | `443`                          | Crowdscience broker port (WSS)       |
-| `STATS_INTERVAL` | no       | `300`                          | Interval in seconds for throughput stats logged to stdout |
-| `FILTER_ENABLED` | no       | `true`                         | Set to `false` or `0` to disable topic filtering (useful for debugging) |
+| `STATS_INTERVAL`      | no  | `300`                          | Interval in seconds for throughput stats logged to stdout |
+| `FILTER_ENABLED`      | no  | `true`                         | Set to `false` or `0` to disable topic filtering (useful for debugging) |
+| `LOCAL_FILTER_PATH`   | no  | `filter-local.json`            | Path to a local blacklist file (see [Filtering](#filtering)) |
+| `LOCAL_WHITELIST_PATH`| no  | `whitelist-local.json`         | Path to a local whitelist file (see [Filtering](#filtering)) |
 
 ## Stats
 
@@ -90,14 +92,55 @@ Adjust the interval via `STATS_INTERVAL` (default: 300 s). Set it to `0` to disa
 
 ## Filtering
 
-On startup the bridge fetches the [filter configuration](https://github.com/htw-solarspeichersysteme/evcc-crowdscience/blob/main/apps/transporter/src/lib/filtering.ts) from the upstream Crowdscience repository and uses it to drop topics that should not be forwarded:
+On startup the bridge fetches the [filter configuration](https://github.com/htw-solarspeichersysteme/evcc-crowdscience/blob/main/apps/transporter/src/lib/filtering.ts) from the upstream Crowdscience repository. If the file cannot be fetched the bridge starts **without filtering** and logs a warning.
 
-- Topics whose suffix starts with one of the **config prefixes** (e.g. passwords, credentials stored in evcc config topics)
-- Topics whose suffix contains one of the **invalid substrings** (e.g. keys, tokens)
+Filtering reduces outbound traffic: evcc publishes many topics that are irrelevant for research purposes (config, credentials, tariffs, forecast, …), which can make up the majority of all messages. The remote broker would discard them anyway — dropping them locally saves bandwidth.
 
-This keeps the filter logic in sync with what the Crowdscience backend expects without requiring manual updates here. If the upstream file cannot be fetched the bridge starts **without filtering** and logs a warning.
+### Blacklist mode (default)
 
-Filtering also reduces outbound traffic: evcc publishes many topics that are irrelevant for research purposes (config, tariffs, evopt, …), which can add up to a significant share of all messages. The remote broker would discard them anyway — dropping them locally saves bandwidth and avoids unnecessary publishes.
+Drops topics matching the upstream filter rules:
+
+- Topics whose suffix starts with one of the **config prefixes** (e.g. credentials, certificates)
+- Topics whose suffix contains one of the **invalid substrings** (e.g. `forecast`, `title`)
+
+A **local blacklist** (`filter-local.json`) can extend the upstream rules with additional entries. This is useful for topics added in pending PRs that are not yet merged into the upstream filter:
+
+```json
+{
+  "configPrefixes": ["site/eebus/", "site/ocpp/"],
+  "invalidSubstrings": []
+}
+```
+
+### Whitelist mode
+
+If `whitelist-local.json` is present, the bridge switches to whitelist mode: only topics matching one of the listed patterns are forwarded, and the blacklist is inactive. The `+` wildcard matches exactly one topic level.
+
+```json
+{
+  "allowedPatterns": [
+    "updated",
+    "site/+",
+    "site/pv/+/+",
+    "site/battery/+",
+    "loadpoints/+/+"
+  ]
+}
+```
+
+A ready-to-use `whitelist-local.json` covering all measurements queried by the Crowdscience web app is included in this repository.
+
+Startup log shows the active mode:
+
+```
+Filter loaded: 9 config prefixes, 6 invalid substrings
+Local filter loaded: +5 config prefixes, +0 invalid substrings (filter-local.json)
+Whitelist: not configured (whitelist-local.json not found) – using blacklist
+```
+
+```
+Whitelist loaded: 20 patterns (whitelist-local.json) – blacklist inactive
+```
 
 ## Legal
 
