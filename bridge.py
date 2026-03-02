@@ -26,9 +26,10 @@ LOCAL_TOPIC    = os.environ.get("LOCAL_TOPIC", "evcc")
 remote_client  = None
 msg_count      = 0
 
-STATS_INTERVAL    = int(os.environ.get("STATS_INTERVAL", 300))
-FILTER_ENABLED    = os.environ.get("FILTER_ENABLED", "true").lower() not in ("false", "0")
-LOCAL_FILTER_PATH = os.environ.get("LOCAL_FILTER_PATH", "filter-local.json")
+STATS_INTERVAL      = int(os.environ.get("STATS_INTERVAL", 300))
+FILTER_ENABLED      = os.environ.get("FILTER_ENABLED", "true").lower() not in ("false", "0")
+LOCAL_FILTER_PATH   = os.environ.get("LOCAL_FILTER_PATH", "filter-local.json")
+LOCAL_WHITELIST_PATH = os.environ.get("LOCAL_WHITELIST_PATH", "whitelist-local.json")
 
 FILTERING_TS_URL = (
     "https://raw.githubusercontent.com/htw-solarspeichersysteme/"
@@ -65,6 +66,28 @@ def make_filter(config_prefixes, invalid_substrings):
     return filter_topic
 
 
+def mqtt_pattern_match(pattern, topic):
+    parts_p, parts_t = pattern.split("/"), topic.split("/")
+    if len(parts_p) != len(parts_t):
+        return False
+    return all(p == "+" or p == t for p, t in zip(parts_p, parts_t))
+
+
+def load_local_whitelist():
+    try:
+        with open(LOCAL_WHITELIST_PATH) as f:
+            patterns = json.load(f).get("allowedPatterns", [])
+        if not patterns:
+            return None
+        print(f"Whitelist loaded: {len(patterns)} patterns", flush=True)
+        return patterns
+    except FileNotFoundError:
+        return None
+    except Exception as e:
+        print(f"Warning: could not load whitelist ({e})", flush=True)
+        return None
+
+
 def load_local_filter():
     try:
         with open(LOCAL_FILTER_PATH) as f:
@@ -90,6 +113,7 @@ else:
     print("Filtering disabled via FILTER_ENABLED=false", flush=True)
     config_prefixes, invalid_substrings = None, None
 filter_topic = make_filter(config_prefixes, invalid_substrings)
+whitelist = load_local_whitelist()
 
 print(f"Device ID: {DEVICE_ID}", flush=True)
 print(f"Publishing to: evcc/{DEVICE_ID}/<suffix>", flush=True)
@@ -116,7 +140,10 @@ def on_local_connect(client, userdata, flags, rc):
 def on_local_message(client, userdata, msg):
     global msg_count
     suffix = msg.topic[len(LOCAL_TOPIC) + 1:]
-    if filter_topic(suffix):
+    if whitelist is not None:
+        if not any(mqtt_pattern_match(p, suffix) for p in whitelist):
+            return
+    elif filter_topic(suffix):
         return
     remote_topic = f"evcc/{DEVICE_ID}/{suffix}"
     remote_client.publish(remote_topic, msg.payload, qos=1)

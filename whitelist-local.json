@@ -1,0 +1,24 @@
+{
+  "allowedPatterns": [
+    "updated",
+    "status",
+    "site/+",
+    "site/pv/+/+",
+    "site/battery/+",
+    "site/battery/+/+",
+    "site/battery/devices/+/+",
+    "site/grid/+",
+    "site/grid/powers/+",
+    "site/grid/currents/+",
+    "site/statistics/+/+",
+    "site/circuits/+/+",
+    "site/ext/+/+",
+    "loadpoints",
+    "loadpoints/+/+",
+    "loadpoints/+/chargeCurrents/+",
+    "loadpoints/+/chargeVoltages/+",
+    "loadpoints/+/effectivePlanStrategy/+",
+    "vehicles",
+    "vehicles/+/+"
+  ]
+}
