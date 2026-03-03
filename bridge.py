@@ -27,6 +27,7 @@ remote_client  = None
 msg_count      = 0
 
 STATS_INTERVAL      = int(os.environ.get("STATS_INTERVAL", 300))
+DEBUG               = os.environ.get("DEBUG", "false").lower() in ("true", "1")
 FILTER_ENABLED      = os.environ.get("FILTER_ENABLED", "true").lower() not in ("false", "0")
 LOCAL_FILTER_PATH   = os.environ.get("LOCAL_FILTER_PATH", "filter-local.json")
 LOCAL_WHITELIST_PATH = os.environ.get("LOCAL_WHITELIST_PATH", "whitelist-local.json")
@@ -150,6 +151,8 @@ def on_local_message(client, userdata, msg):
     elif filter_topic(suffix):
         return
     remote_topic = f"evcc/{DEVICE_ID}/{suffix}"
+    if DEBUG:
+        print(f"forward: {remote_topic}", flush=True)
     remote_client.publish(remote_topic, msg.payload, qos=1)
     msg_count += 1
 
