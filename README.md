@@ -76,6 +76,7 @@ sudo journalctl -fu evcc-crowdscience-bridge
 | `REMOTE_HOST`    | no       | `mqtt.evcc-crowdscience.de`    | Crowdscience broker hostname         |
 | `REMOTE_PORT`    | no       | `443`                          | Crowdscience broker port (WSS)       |
 | `STATS_INTERVAL`      | no  | `300`                          | Interval in seconds for throughput stats logged to stdout |
+| `DEBUG`               | no  | `false`                        | Set to `true` or `1` to log every forwarded topic |
 | `FILTER_ENABLED`      | no  | `true`                         | Set to `false` or `0` to disable topic filtering (useful for debugging) |
 | `LOCAL_FILTER_PATH`   | no  | `filter-local.json`            | Path to a local blacklist file (see [Filtering](#filtering)) |
 | `LOCAL_WHITELIST_PATH`| no  | `whitelist-local.json`         | Path to a local whitelist file (see [Filtering](#filtering)) |
@@ -114,7 +115,7 @@ A **local blacklist** (`filter-local.json`) can extend the upstream rules with a
 
 ### Whitelist mode
 
-If `whitelist-local.json` is present, the bridge switches to whitelist mode: only topics matching one of the listed patterns are forwarded, and the blacklist is inactive. The `+` wildcard matches exactly one topic level.
+If `whitelist-local.json` is present, the bridge switches to whitelist mode: only topics matching one of the listed patterns are forwarded. The blacklist is applied additionally to filter sensitive topics (e.g. device titles, credentials) that may be matched by broad whitelist patterns. The `+` wildcard matches exactly one topic level.
 
 ```json
 {
@@ -139,7 +140,7 @@ Whitelist: not configured (whitelist-local.json not found) – using blacklist
 ```
 
 ```
-Whitelist loaded: 20 patterns (whitelist-local.json) – blacklist inactive
+Whitelist loaded: 20 patterns (whitelist-local.json) – blacklist active additionally
 ```
 
 ## Legal

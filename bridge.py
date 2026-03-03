@@ -80,7 +80,7 @@ def load_local_whitelist():
             patterns = json.load(f).get("allowedPatterns", [])
         if not patterns:
             return None
-        print(f"Whitelist loaded: {len(patterns)} patterns ({LOCAL_WHITELIST_PATH}) – blacklist inactive", flush=True)
+        print(f"Whitelist loaded: {len(patterns)} patterns ({LOCAL_WHITELIST_PATH}) – blacklist active additionally", flush=True)
         return patterns
     except FileNotFoundError:
         print(f"Whitelist: not configured ({LOCAL_WHITELIST_PATH} not found) – using blacklist", flush=True)
@@ -148,7 +148,7 @@ def on_local_message(client, userdata, msg):
     if whitelist is not None:
         if not any(mqtt_pattern_match(p, suffix) for p in whitelist):
             return
-    elif filter_topic(suffix):
+    if filter_topic(suffix):
         return
     remote_topic = f"evcc/{DEVICE_ID}/{suffix}"
     if DEBUG:
